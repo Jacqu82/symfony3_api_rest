@@ -30,7 +30,6 @@ class ApiExceptionSubscriber implements EventSubscriberInterface
         }
 
         $e = $event->getException();
-
         $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : 500;
 
         // allow 500 errors to be thrown

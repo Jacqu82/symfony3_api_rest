@@ -7,10 +7,10 @@
 /composer.phar
 /vendor/
 /web/bundles/
+/web/css/
+/web/img/
+/web/js/
 .idea/
-/var/cache/
-/var/logs/
-/var/sessions/
+/var/
 /resources/
 /features/web/
-/web/

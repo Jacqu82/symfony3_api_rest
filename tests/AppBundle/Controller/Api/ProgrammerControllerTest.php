@@ -21,15 +21,10 @@ class ProgrammerControllerTest extends ApiTestCase
             'tagLine' => 'a test dev!'
         );
 
-        $token = $this->getService('lexik_jwt_authentication.encoder')
-            ->encode(['username' => 'weaverryan']);
-
         // 1) Create a programmer resource
         $response = $this->client->post('/api/programmers', [
             'body' => json_encode($data),
-            'headers' => [
-                'Authorization' => 'Bearer ' . $token
-            ]
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
         ]);
 
         $this->assertEquals(201, $response->getStatusCode());
@@ -47,7 +42,9 @@ class ProgrammerControllerTest extends ApiTestCase
             'avatarNumber' => 3,
         ));
 
-        $response = $this->client->get('/api/programmers/UnitTester');
+        $response = $this->client->get('/api/programmers/UnitTester', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertiesExist($response, array(
             'nickname',
@@ -70,7 +67,9 @@ class ProgrammerControllerTest extends ApiTestCase
             'avatarNumber' => 3,
         ));
 
-        $response = $this->client->get('/api/programmers/UnitTester?deep=1');
+        $response = $this->client->get('/api/programmers/UnitTester?deep=1', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertiesExist($response, array(
             'user.username'
@@ -88,7 +87,9 @@ class ProgrammerControllerTest extends ApiTestCase
             'avatarNumber' => 5,
         ));
 
-        $response = $this->client->get('/api/programmers');
+        $response = $this->client->get('/api/programmers', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyIsArray($response, 'items');
         $this->asserter()->assertResponsePropertyCount($response, 'items', 2);
@@ -110,7 +111,9 @@ class ProgrammerControllerTest extends ApiTestCase
         }
 
         // page 1
-        $response = $this->client->get('/api/programmers?filter=programmer');
+        $response = $this->client->get('/api/programmers?filter=programmer', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals(
             $response,
@@ -124,7 +127,9 @@ class ProgrammerControllerTest extends ApiTestCase
 
         // page 2
         $nextLink = $this->asserter()->readResponseProperty($response, '_links.next');
-        $response = $this->client->get($nextLink);
+        $response = $this->client->get($nextLink, [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals(
             $response,
@@ -134,7 +139,9 @@ class ProgrammerControllerTest extends ApiTestCase
         $this->asserter()->assertResponsePropertyEquals($response, 'count', 10);
 
         $lastLink = $this->asserter()->readResponseProperty($response, '_links.last');
-        $response = $this->client->get($lastLink);
+        $response = $this->client->get($lastLink, [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals(
             $response,
@@ -160,7 +167,8 @@ class ProgrammerControllerTest extends ApiTestCase
             'tagLine' => 'foo',
         );
         $response = $this->client->put('/api/programmers/CowboyCoder', [
-            'body' => json_encode($data)
+            'body' => json_encode($data),
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
         ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals($response, 'avatarNumber', 2);
@@ -180,7 +188,8 @@ class ProgrammerControllerTest extends ApiTestCase
             'tagLine' => 'bar',
         );
         $response = $this->client->patch('/api/programmers/CowboyCoder', [
-            'body' => json_encode($data)
+            'body' => json_encode($data),
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
         ]);
         $this->assertEquals(200, $response->getStatusCode());
         $this->asserter()->assertResponsePropertyEquals($response, 'avatarNumber', 5);
@@ -194,7 +203,9 @@ class ProgrammerControllerTest extends ApiTestCase
             'avatarNumber' => 3,
         ));
 
-        $response = $this->client->delete('/api/programmers/UnitTester');
+        $response = $this->client->delete('/api/programmers/UnitTester', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
         $this->assertEquals(204, $response->getStatusCode());
     }
 
@@ -207,7 +218,8 @@ class ProgrammerControllerTest extends ApiTestCase
 
         // 1) Create a programmer resource
         $response = $this->client->post('/api/programmers', [
-            'body' => json_encode($data)
+            'body' => json_encode($data),
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
         ]);
 
         $this->assertEquals(400, $response->getStatusCode());
@@ -233,7 +245,8 @@ class ProgrammerControllerTest extends ApiTestCase
 EOF;
 
         $response = $this->client->post('/api/programmers', [
-            'body' => $invalidBody
+            'body' => $invalidBody,
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
         ]);
 
         $this->assertEquals(400, $response->getStatusCode());
@@ -242,7 +255,9 @@ EOF;
 
     public function test404Exception()
     {
-        $response = $this->client->get('/api/programmers/fake');
+        $response = $this->client->get('/api/programmers/fake', [
+            'headers' => $this->getAuthorizedHeaders('weaverryan')
+        ]);
 
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertEquals('application/problem+json', $response->getHeader('Content-Type')[0]);
@@ -254,7 +269,8 @@ EOF;
     public function testRequiresAuthentication()
     {
         $response = $this->client->post('/api/programmers', [
-            'body' => '[]'
+            'body' => '[]',
+            // do NOT send headers
         ]);
         $this->assertEquals(401, $response->getStatusCode());
     }
